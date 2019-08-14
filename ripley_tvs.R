@@ -7,7 +7,7 @@ library(dplyr)
 #start RSelenium
 
 
-rD  <- rsDriver(port = 4530L, browser = "firefox", version = "latest", chromever = "latest",
+rD  <- rsDriver(port = 4510L, browser = "firefox", version = "latest", chromever = "latest",
                 geckover = "latest", iedrver = NULL, phantomver = "2.1.1",
                 verbose = TRUE, check = TRUE)
 
@@ -183,11 +183,5 @@ ripley_tvs <- ripley_tvs[,c(1,5,2,3,4,6)]
 
 str(ripley_tvs)
 
-
-file <- paste(as.character(Sys.Date()), "ripley-tvs", sep = "-")
-
-ripley_tvs_csv <- paste(file, "csv", sep = ".")
-
-
-write.csv(ripley_tvs, ripley_tvs_csv, row.names = F)
+write.csv(ripley_tvs, "ripley-tvs.csv", row.names = F)
 

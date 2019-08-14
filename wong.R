@@ -44,9 +44,4 @@ wong_tvs <- wong_tvs[nchar(wong_tvs$pulgadas)<=2,]
 
 wong_tvs <- as.data.frame(apply(wong_tvs[,],2,tolower))
 
-file <- paste(as.character(Sys.Date()), "wong-tvs", sep = "-")
-
-wong_tvs_csv <- paste(file, "csv", sep = ".")
-
-
-write.csv(wong_tvs, wong_tvs_csv, row.names = F)
+write.csv(wong_tvs, "wong-tvs.csv", row.names = F)

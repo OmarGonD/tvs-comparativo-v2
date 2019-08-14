@@ -8,7 +8,8 @@ library(stringr)
 #start RSelenium
 
 
-rD  <- rsDriver(port = 4579L, browser = "chrome", version = "latest", chromever = "75.0.3770.90",
+
+rD  <- rsDriver(port = 4572L, browser = "firefox", version = "latest", chromever = "latest",
                 geckover = "latest", iedrver = NULL, phantomver = "2.1.1",
                 verbose = TRUE, check = TRUE)
 
@@ -17,8 +18,6 @@ rD  <- rsDriver(port = 4579L, browser = "chrome", version = "latest", chromever 
 remDr <- rD[["client"]]
 
 
-
-remDr$navigate(tvs_url)
 
 Sys.sleep(10)
 
@@ -79,3 +78,38 @@ wong_tvs <- data.frame(
 
 
 wong_tvs <- wong_tvs[!is.na(wong_tvs$marca),]
+
+
+wong_tvs$pulgadas <- sub(".*?(\\d+['\"]).*", "\\1", wong_tvs$producto)
+
+
+wong_tvs$precio_antes <- trimws(wong_tvs$precio_antes, which = "both")
+
+wong_tvs$precio_actual <- trimws(wong_tvs$precio_actual, which = "both")
+
+
+
+wong_tvs$precio_antes <- gsub(",", "", wong_tvs$precio_antes)
+wong_tvs$precio_actual <- gsub(",", "", wong_tvs$precio_actual)
+
+
+wong_tvs$precio_antes <- gsub("S/", "", wong_tvs$precio_antes)
+wong_tvs$precio_actual <- gsub("S/", "", wong_tvs$precio_actual)
+
+
+wong_tvs$pulgadas <- sub('"', "", wong_tvs$pulgadas)
+wong_tvs$pulgadas <- sub("'", "", wong_tvs$pulgadas)
+
+wong_tvs$pulgadas <- as.character(wong_tvs$pulgadas)
+
+wong_tvs$pulgadas <- sub("'", "", wong_tvs$pulgadas)
+
+
+wong_tvs$pulgadas <- as.numeric(wong_tvs$pulgadas)
+
+write.csv(wong_tvs, "wong-tvs.csv", row.names = F)
+
+
+
+
+

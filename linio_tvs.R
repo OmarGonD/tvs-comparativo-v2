@@ -2,7 +2,7 @@ library(RSelenium)
 
 
 
-rD  <- rsDriver(port = 4514L, browser = "firefox", version = "latest", chromever = "latest",
+rD  <- rsDriver(port = 4532L, browser = "firefox", version = "latest", chromever = "76.0.3809.25",
                 geckover = "latest", iedrver = NULL, phantomver = "2.1.1",
                 verbose = TRUE, check = TRUE)
 
@@ -36,19 +36,17 @@ for (i in 1:5){
     split = "\n"
   )
   
-  
-  
-  #utf8ToInt(splitted[[1]][38]) 
-  #utf8ToInt(splitted[[1]][125]) 
-  
- 
+  # 
+  # sapply(splitted, '[', 1)
+  # sapply(splitted, '[', 2)
+  # sapply(splitted, '[', 3)
   
   assign(paste('linio_tvs_pag_', i, sep=''), data.frame(
     ecommerce = "linio",
     #marca = sapply(splitted, "[", 2), #We don't need the "comparar" text so we start from 2
     producto = sapply(splitted, "[", 1),
     precio_antes = sapply(splitted, "[", 2),
-    precio_actual = sapply(splitted, "[", 3)
+    precio_actual = ifelse(lengths(splitted)==2, sapply(splitted, "[", 2), sapply(splitted, "[", 3))
   ))
   
   
@@ -71,13 +69,58 @@ linio_tvs <- rbind(linio_tvs_pag_1, linio_tvs_pag_2, linio_tvs_pag_3,
 
 
 
+##### Marca
 
-linio_tvs$precio_antes <- gsub(",", "", linio_tvs$precio_antes)
-linio_tvs$precio_actual <- gsub(",", "", linio_tvs$precio_actual)
+linio_tvs$marca <- ifelse(grepl("samsung", linio_tvs$producto, ignore.case = T), "samsung",linio_tvs$producto) 
+
+linio_tvs$marca <- ifelse(grepl("lg", linio_tvs$producto, ignore.case = T), "lg",linio_tvs$marca) 
+
+linio_tvs$marca <- ifelse(grepl("haier", linio_tvs$producto, ignore.case = T), "haier",linio_tvs$marca)
+
+linio_tvs$marca <- ifelse(grepl("panasonic", linio_tvs$producto, ignore.case = T), "panasonic",linio_tvs$marca)
+
+linio_tvs$marca <- ifelse(grepl("sony", linio_tvs$producto, ignore.case = T), "sony",linio_tvs$marca)
+
+linio_tvs$marca <- ifelse(grepl("sharp", linio_tvs$producto, ignore.case = T), "sharp",linio_tvs$marca)
+
+linio_tvs$marca <- ifelse(grepl("aoc", linio_tvs$producto, ignore.case = T), "aoc",linio_tvs$marca)
+
+linio_tvs$marca <- ifelse(grepl("philips", linio_tvs$producto, ignore.case = T), "philips",linio_tvs$marca)
+
+linio_tvs$marca <- ifelse(grepl("hyundai", linio_tvs$producto, ignore.case = T), "hyundai",linio_tvs$marca)
+
+linio_tvs$marca <- ifelse(grepl("hisense", linio_tvs$producto, ignore.case = T), "hisense",linio_tvs$marca)
+
+linio_tvs$marca <- ifelse(grepl("orizon", linio_tvs$producto, ignore.case = T), "orizon",linio_tvs$marca)
+
+linio_tvs$marca <- ifelse(grepl("imaco", linio_tvs$producto, ignore.case = T), "imaco",linio_tvs$marca)
+
+linio_tvs$marca <- ifelse(grepl("daewoo", linio_tvs$producto, ignore.case = T), "daewoo",linio_tvs$marca)
+
+###
+
+
+
+
 
 
 linio_tvs$precio_antes <- gsub("S/", "", linio_tvs$precio_antes)
 linio_tvs$precio_actual <- gsub("S/", "", linio_tvs$precio_actual)
+
+
+linio_tvs$precio_antes <- gsub(" -.*", "", linio_tvs$precio_antes)
+linio_tvs$precio_actual <- gsub(" -.*", "", linio_tvs$precio_actual)
+
+
+linio_tvs$precio_antes <- gsub("desde ", "", linio_tvs$precio_antes)
+linio_tvs$precio_actual <- gsub("desde ", "", linio_tvs$precio_actual)
+
+
+
+
+linio_tvs$precio_antes <- gsub(",", "", linio_tvs$precio_antes)
+linio_tvs$precio_actual <- gsub(",", "", linio_tvs$precio_actual)
+
 
 
 
@@ -116,10 +159,13 @@ linio_tvs$precio_actual <- as.numeric(linio_tvs$precio_actual)
 
 
 
-str(linio_tvs)
 
 
-linio_tvs$precio_antes <- ifelse(is.na(linio_tvs$precio_antes), linio_tvs$precio_actual, linio_tvs$precio_antes)
+
+
+
+#### estaba reemplanazando los precios actuales por precios anteriores.
+#linio_tvs$precio_antes <- ifelse(is.na(linio_tvs$precio_antes), linio_tvs$precio_actual, linio_tvs$precio_antes)
 
 ### Ordenar columnas
 
@@ -127,6 +173,14 @@ linio_tvs$precio_antes <- ifelse(is.na(linio_tvs$precio_antes), linio_tvs$precio
 
 
 linio_tvs <- as.data.frame(apply(linio_tvs[,],2,tolower))
+
+linio_tvs <- linio_tvs[rowSums(is.na(linio_tvs)) != ncol(linio_tvs), ]
+
+
+colnames(linio_tvs)
+### Ordenar columnas
+
+linio_tvs <- linio_tvs[,c(1,5,2,3,4,6)]
 
 
 # file <- paste(as.character(Sys.Date()), "linio-tvs", sep = "-")

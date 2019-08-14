@@ -1,5 +1,5 @@
 ---
-title: "Compartivo TVs - 2016 y 2017"
+title: "Compartivo TVs - 2019"
 author: "Omar Gonzáles Díaz"
 date: '2019-07-08'
 banner: img/banners/tvs.jpg
@@ -77,13 +77,34 @@ library(scales)
 library(tibble)
 library(plotly)
 library(repmis)
+library(knitr)
+library(formattable)
+library(scales)
 
 
 
 
 
 
-tvs <- source_data("https://www.dropbox.com/s/6arewitgenhwwba/2017-03-15-total-tvs.csv?raw=1")
+tvs <- source_data("https://www.dropbox.com/s/d6ea2ja8k9jfz7m/tvs-2019.csv?raw=1")
+
+
+
+
+
+brand_tvs_colors <- c("hisense" = "#F39EF7", "sony" = "#003366","panasonic" = "#FCB462",
+                      "samsung" = "#7ec0ee", "lg" = "#A21420",
+                      "aoc" = "#9DCC27", "sharp" = "#BEBBDA", "hyundai" = "#FCB442",
+                      "haier" = "#454545", "imaco" = "#e6f029", "royal" = "#cb7dff",
+                      "olitec" = "#1472c4", "nex" = "#d3d9de", "daewoo" = "#333333",
+                      "altron" = "#e69729", "blackline" = "#87765f", "miray" = "#63b33b",
+                      "king master" = "#19bfba", "xenon" = "#a640bd", "jvc" = "#d19b90")
+
+
+
+
+ecommerce_colors <- c("linio" = "#ff5500","ripley" = "#802D69","falabella" = "#aad500",
+                      "wong" = "#ec1c24", "tottus" = "#76b703", "lacuracao" = "#ffec02")
 
 
 ```
@@ -104,8 +125,6 @@ Observamos que la tendencia entre los 3 ecommerce es la misma que el año 2016: 
 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE, results='asis'}
 
-library(knitr)
-library(formattable)
 
 
 ############################################
@@ -118,30 +137,26 @@ library(formattable)
 
 
 
+
 tvs <- tvs %>%
-       filter(pulgadas < 90, !is.na(marca))
-
-
+  filter(pulgadas < 90, !is.na(marca))
 
 
 tvs_cantidad <- tvs  %>%
-                group_by(periodo, ecommerce) %>%
-                summarise(cantidad = length(marca))
+  group_by(periodo, ecommerce) %>%
+  summarise(cantidad = length(marca))
 
 
-
-tvs_cantidad <- tvs_cantidad %>% group_by(ecommerce) %>% 
-  mutate(diferencia_porcentual = (cantidad - lag(cantidad))/lag(cantidad) * 100) %>%
-  mutate(diferencia_porcentual = round(diferencia_porcentual,2)) 
-
-
-tvs_cantidad[is.na(tvs_cantidad)] <- 0
-
-
+str(tvs_cantidad)
 
 
 tvs_cantidad <- tvs_cantidad %>%
-                   mutate(diferencia_porcentual = percent(paste0(diferencia_porcentual,"%")))
+  group_by(ecommerce) %>% 
+  mutate(diferencia_porcentual = (cantidad - lag(cantidad))/lag(cantidad))
+
+str(tvs_cantidad)
+
+tvs_cantidad[is.na(tvs_cantidad)] <- 0
 
 
 
@@ -151,7 +166,10 @@ tvs_cantidad <- tvs_cantidad %>%
 
 tvs_cantidad$ecommerce <- factor(tvs_cantidad$ecommerce, levels = c("linio",
                                                                     "ripley",
-                                                                    "falabella"),
+                                                                    "falabella",
+                                                                    "tottus",
+                                                                    "wong",
+                                                                    "lacuracao"),
                                  ordered = T)
 
 
@@ -160,42 +178,26 @@ tvs_cantidad$ecommerce <- factor(tvs_cantidad$ecommerce, levels = c("linio",
 
 
 
-tvs_cantidad$periodo <- factor(tvs_cantidad$periodo, levels = c(2017,2016),
+tvs_cantidad$periodo <- factor(tvs_cantidad$periodo, levels = c(2016,2017, 2019),
                                ordered = T)
-
-
-
-
-
-
-
-```
-
-
-</br>
-
-```{r echo=FALSE, message=FALSE, warning=FALSE}
-
-
-
-
 
 tt1 <- ""
 stt1 <- ""
-# tt1 <- "Ecommerce con m�s TVs"
-# stt1 <- "Linio, Ripley y Falabella son los 3 principales ecommerce del Per�.\n"
+# tt1 <- "Ecommerce con más TVs"
+# stt1 <- "Linio, Ripley y Falabella son los 3 principales ecommerce del Perú. \n"
 cptn <- "\nogonzales.com | Data Analyst"
 
 
 
 
-ggplot(tvs_cantidad, aes(x=ecommerce, y= cantidad, fill = ecommerce)) + 
+
+cantidad_tvs <- ggplot(tvs_cantidad, aes(x=ecommerce, y= cantidad, fill = ecommerce)) + 
   geom_bar(stat = "identity", width = .7) +
-  facet_grid(~ periodo) +
+  facet_wrap(~ periodo, ncol = 2) +
   theme_bw() +
   scale_fill_manual("ecommerce",
-                    values = c("linio" = "#FF5500","ripley" = "#802D69","falabella" = "#BED800")) +
-  labs(title = "Ecommerce con m�s TVs\n",
+                    values = ecommerce_colors) +
+  labs(title = "Ecommerce con más TVs\n",
        x = "", y = "") +
   #theme_ipsum_rc(grid = "Y") +
   theme(axis.text.x = element_text(colour="grey10",size=12,hjust=.5,vjust=.5,face="plain"),
@@ -211,13 +213,13 @@ ggplot(tvs_cantidad, aes(x=ecommerce, y= cantidad, fill = ecommerce)) +
         strip.background = element_rect(colour = "white", fill = "white"),
         panel.grid.major.x = element_blank(),
         panel.grid.minor.x = element_blank()) +
-  geom_text(aes(label=cantidad), vjust=-0.6, size = 4) +
-  ylim(0, 600) +
-  labs(title = tt1, subtitle = stt1, caption = cptn,
-       x = "", y = "") 
+  #geom_text(aes(label=cantidad), vjust=-0.6, size = 4) +
+  ylim(0, 600)
 
 
 
+ggplotly(cantidad_tvs, tooltip=c("cantidad"))  %>% 
+  config(displayModeBar = FALSE)
 
 ```
 
@@ -227,8 +229,11 @@ ggplot(tvs_cantidad, aes(x=ecommerce, y= cantidad, fill = ecommerce)) +
 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
 
+tvs_cantidad$diferencia_porcentual <- percent(tvs_cantidad$diferencia_porcentual)
+
 formattable(tvs_cantidad, list(
-  diferencia_porcentual = color_tile("white", "green3")))
+  diferencia_porcentual = color_tile("white", "green3"),
+  cantidad = color_tile("yellow", "orange")))
 
 ```
 
@@ -262,19 +267,20 @@ Scaterplot que muestra la tendencia entre pulgadas vs precio.
 
 
 
+
 tv_pulgadas_vs_pulgadas <- tvs %>% 
-     group_by(periodo, ecommerce, marca, pulgadas) %>%
-     filter(pulgadas <= 90, marca != "xenon") 
+  group_by(periodo, ecommerce, marca, pulgadas) %>%
+  filter(pulgadas <= 90, marca != "xenon") 
 
 
 
 
-tv_pulgadas_vs_pulgadas$periodo <- factor(tv_pulgadas_vs_pulgadas$periodo, levels = c(2017,2016), ordered = T)
+tv_pulgadas_vs_pulgadas$periodo <- factor(tv_pulgadas_vs_pulgadas$periodo, levels = c(2019, 2017,2016), ordered = T)
 
 tv_pulgadas_vs_pulgadas$marca <- as.factor(tv_pulgadas_vs_pulgadas$marca)
 
 
-pulgadas_precio <- ggplot(tv_pulgadas_vs_pulgadas, aes(x = pulgadas, y = precio.actual, text = sprintf("S/ %s", comma(precio.actual)))) + 
+pulgadas_precio <- ggplot(tv_pulgadas_vs_pulgadas, aes(x = pulgadas, y = precio_actual, text = sprintf("S/ %s", comma(precio_actual)))) + 
   geom_point(aes(color=marca),size = 2,alpha = 0.4) +
   facet_grid(ecommerce ~ periodo, switch = "y") +
   theme_bw() +
@@ -293,7 +299,7 @@ pulgadas_precio <- ggplot(tv_pulgadas_vs_pulgadas, aes(x = pulgadas, y = precio.
         strip.background = element_rect(colour = "white", fill = "white"),
         panel.grid.major.x = element_blank(),
         panel.grid.minor.x = element_blank()) +
-  scale_y_continuous(label=comma, limits = c(0,36000)) +
+  #scale_y_continuous(label=comma, limits = c(0,36000)) +
   #scale_x_continuous(label=comma, limits = c(0,100)) +
   labs(title = "", subtitle = "", caption = "",
        x = "pulgadas \n", y = "Precio en S/.")
@@ -301,8 +307,6 @@ pulgadas_precio <- ggplot(tv_pulgadas_vs_pulgadas, aes(x = pulgadas, y = precio.
 
 ggplotly(pulgadas_precio, tooltip=c("marca", "pulgadas", "text"))  %>% 
   config(displayModeBar = FALSE)
-
-
 
 
 ```
@@ -313,16 +317,16 @@ ggplotly(pulgadas_precio, tooltip=c("marca", "pulgadas", "text"))  %>%
 </br>
 </br>
 
-## TVs por Rango de Precio
+## TVs por rangos de Precio
 
 </br>
 
 
-### Mayor variedad de productos en el rango **S/.500 y S/.1,500**: 
+### Mayor variedad de productos en el rangos **S/.500 y S/.1,500**: 
 
 Es interesante observar que la variedad de televisores ofertados se encuentran entre los S/.500 y S/.1,500 soles. 
 
-También encontramos una buena cantidad de televisores en el rango **> S/.4000**.
+También encontramos una buena cantidad de televisores en el rangos **> S/.4000**.
 
 </br>
 </br>
@@ -332,34 +336,38 @@ También encontramos una buena cantidad de televisores en el rango **> S/.4000**
 
 
 ############################################
-### TVS 2017 vs 2016 por Rango de Precio ###
+### TVS 2017 vs 2016 por rangos de Precio ###
 ############################################
 
 
 
 
-tvs_rango <- tvs %>%
-  group_by(periodo, ecommerce, rango) %>%
-  summarise(cantidad = length(rango))
+
+tvs_rangos <- tvs %>%
+  group_by(periodo, ecommerce, rangos) %>%
+  summarise(cantidad = length(rangos))
 
 
 
 
-tvs_rango$periodo <- factor(tvs_rango$periodo, levels = c(2017,2016),
+tvs_rangos$periodo <- factor(tvs_rangos$periodo, levels = c(2016,2017, 2019),
                             ordered = T)
 
 
 
-tvs_rango$ecommerce <- factor(tvs_rango$ecommerce, levels = c("linio",
-                                                              "ripley",
-                                                              "falabella"),
-                              ordered = T)
+tvs_cantidad$ecommerce <- factor(tvs_cantidad$ecommerce, levels = c("linio",
+                                                                    "ripley",
+                                                                    "falabella",
+                                                                    "tottus",
+                                                                    "wong",
+                                                                    "lacuracao"),
+                                 ordered = T)
 
 
 
 
 
-tvs_rango$rango <- factor(tvs_rango$rango, levels = c("< S/.500",
+tvs_rangos$rangos <- factor(tvs_rangos$rangos, levels = c("< S/.500",
                                                       "S/.500 -\r\n S/.1500",
                                                       "S/.1500 -\r\n S/.2500",
                                                       "S/.2500 -\r\n S/.3500",
@@ -377,45 +385,45 @@ tvs_rango$rango <- factor(tvs_rango$rango, levels = c("< S/.500",
 ### formato de la p�gina web. 
 
 
-#tt2 <- "Cantidad de TVs seg�n rango de precio"
+#tt2 <- "Cantidad de TVs seg�n rangos de precio"
 tt2 <- ""
 stt2 <- "\n"
 
 
 
-tvs_por_rango_de_precio <- ggplotly(ggplot(tvs_rango, aes(x = rango, y = cantidad, fill = ecommerce)) +
-           geom_bar(stat = "identity") + 
-           scale_fill_manual("ecommerce",
-                             values = c("linio" = "#FF5500","ripley" = "#802D69","falabella" = "#BED800")) +
-           facet_grid(~ periodo) +
-           theme_bw() +
-           coord_flip() +
-           #theme_ipsum_rc(grid = "X") +
-           theme(axis.text.x = element_text(colour="grey10",size=10,hjust=.5,vjust=.5,face="plain"),
-                 axis.text.y = element_text(colour="grey10",size=10,hjust=1,vjust=0,face="plain"),  
-                 axis.title.x = element_text(colour="grey40",size=16,angle=0,hjust=.5,vjust=0,face="plain"),
-                 axis.title.y = element_text(colour="grey40",size=16,angle=90,hjust=.5,vjust=.5,face="plain"),
-                 plot.title = element_text(size = 24,vjust=4, face="bold"),
-                 plot.subtitle = element_text(vjust=2, size = 16),
-                 plot.caption = element_text(vjust=2, size = 16),
-                 panel.border = element_rect(colour = "white"),
-                 legend.position = "none",
-                 strip.text = element_text(size = 18, hjust = 0.01, vjust = -0.5),
-                 strip.background = element_rect(colour = "white", fill = "white"),
-                 panel.grid.major.y = element_blank(),
-                 panel.grid.minor.y = element_blank()) +
-           #geom_text(aes(label=cantidad), hjust=-0.25, size = 4) +
-           ylim(0, 300) +
-           labs(title = tt2, subtitle = stt2, caption = cptn,
-                x = "", y = "")) 
-
-
-tvs_por_rango_de_precio %>% 
-  config(displayModeBar = FALSE)
+tvs_por_rangos_de_precio <- ggplotly(ggplot(tvs_rangos, aes(x = rangos, y = cantidad, fill = ecommerce)) +
+                                      geom_bar(stat = "identity") + 
+                                      scale_fill_manual("ecommerce",
+                                                        values = ecommerce_colors) +
+                                      facet_grid(~ periodo) +
+                                      theme_bw() +
+                                      coord_flip() +
+                                      #theme_ipsum_rc(grid = "X") +
+                                      theme(axis.text.x = element_text(colour="grey10",size=10,hjust=.5,vjust=.5,face="plain"),
+                                            axis.text.y = element_text(colour="grey10",size=10,hjust=1,vjust=0,face="plain"),  
+                                            axis.title.x = element_text(colour="grey40",size=16,angle=0,hjust=.5,vjust=0,face="plain"),
+                                            axis.title.y = element_text(colour="grey40",size=16,angle=90,hjust=.5,vjust=.5,face="plain"),
+                                            plot.title = element_text(size = 24,vjust=4, face="bold"),
+                                            plot.subtitle = element_text(vjust=2, size = 16),
+                                            plot.caption = element_text(vjust=2, size = 16),
+                                            panel.border = element_rect(colour = "white"),
+                                            legend.position = "none",
+                                            strip.text = element_text(size = 18, hjust = 0.01, vjust = -0.5),
+                                            strip.background = element_rect(colour = "white", fill = "white"),
+                                            panel.grid.major.y = element_blank(),
+                                            panel.grid.minor.y = element_blank()) +
+                                      #geom_text(aes(label=cantidad), hjust=-0.25, size = 4) +
+                                     ylim(0, 300) +
+                                      labs(title = tt2, subtitle = stt2, caption = cptn,
+                                           x = "", y = ""),
+                                    tooltip=c("cantidad", "ecommerce"))
 
 
 
+tvs_por_rangos_de_precio %>% 
+  config(displayModeBar = FALSE) 
 
+                                    
 ```
 
 
@@ -454,56 +462,38 @@ tvs_precios <- tvs
 
 
 
-tvs_precios$periodo <- factor(tvs_precios$periodo, levels = c(2017,2016),
+tvs_precios$periodo <- factor(tvs_precios$periodo, levels = c(2016,2017, 2019),
                               ordered = T)
 
 
 
-tvs_precios$ecommerce <- factor(tvs_precios$ecommerce, levels = rev(c("linio","ripley","falabella")),
-                                ordered = T)
+tvs_cantidad$ecommerce <- factor(tvs_cantidad$ecommerce, levels = c("linio",
+                                                                    "ripley",
+                                                                    "falabella",
+                                                                    "tottus",
+                                                                    "wong",
+                                                                    "lacuracao"),
+                                 ordered = T)
 
 
 
+# tvs_precios$precio_actual <- prettyNum(tvs_precios$precio_actual, big.mark=",",scientific=FALSE) #EDIT
+# tvs_precios$precio_actual <- paste("S/", tvs_precios$precio_actual, sep=" ")
 
 
 
-
-### Distribuci�n de los precios de TVs por Ecommerce
-
-
-p <- plot_ly(tvs_precios, x = ~periodo, y = ~precio.actual, color = ~ecommerce,colors = c("#BED800", "#802D69", "#FF5500"), type = "box") %>%
-  layout(boxmode = "group") %>% 
-  config(displayModeBar = FALSE) %>%
-  add_trace(
-    hovertemplate = 'Precio: %{y:S/.2f}<extra></extra>',
-    showlegend = F
-  )
+p <- plot_ly(tvs_precios, x = ~periodo, y = ~precio_actual, color = ~ecommerce, 
+        colors = ecommerce_colors) %>%
+  add_boxplot() %>%
+  layout(boxmode = "group",
+         title = "Distribución de precios por Ecommerce",
+         yaxis = list(
+         hoverformat = '\\S\\/,.2f'
+          )) %>% 
+ 
+  config(displayModeBar = FALSE) 
 
 p
-
-
-
-
-
-
-```
-
-</br>
-</br>
-
-## Variedad de marcas de TV según rango de precios
-
-
-</br>
-</br>
-
-
-```{r, echo=FALSE, message=FALSE, warning=FALSE}
-
-#############################################
-### Gr�ficos individuales por ecommerce ###
-#############################################
-
 
 
 ### ripley ###
@@ -523,21 +513,22 @@ tvs_linio <- tvs[tvs$ecommerce == "linio",]
 
 
 
-tvs_linio.parte1 <- tvs_linio %>%
-                    filter(marca %in% c("lg", "aoc","imaco",
-                                        "royal","panasonic",
-                                        "samsung", "sony", "olitec",
-                                        "haier", "nex"))
+tvs_linio_parte1 <- tvs_linio %>%
+  filter(marca %in% c("lg", "aoc","imaco",
+                      "royal","panasonic",
+                      "samsung", "sony", "olitec",
+                      "haier", "nex"))
 
 
 
 
 tvs_linio_parte2 <- tvs_linio %>%
-                    filter(marca %in% c("daywoo","altron","blackline",
-                                        "miray","hisense", "king master",
-                                        "xenon", "hyundai", "jvc"))
-                  
-                  
+  filter(marca %in% c("daywoo","altron","blackline",
+                      "miray","hisense", "king master",
+                      "xenon", "hyundai", "jvc"))
+
+
+
 
 
 
@@ -546,7 +537,7 @@ tvs_linio_parte2 <- tvs_linio %>%
 
 
 #########################################################
-### MARCAS DE TV POR RANGO DE PRECIO - EN PORCENTAJES ###
+### MARCAS DE TV POR rangos DE PRECIO - EN PORCENTAJES ###
 #########################################################
 
 
@@ -558,9 +549,9 @@ tvs_linio_parte2 <- tvs_linio %>%
 
 ### Ripley
 
-Se observa, a comparación del 2016, que este año se incrementó la variedad de marcas a escoger en el rango "< S/.500": se incorporó productos de las marcas _Haier_ y _LG_ en este rango de precios.
+Se observa, a comparación del 2016, que este año se incrementó la variedad de marcas a escoger en el rangos "< S/.500": se incorporó productos de las marcas _Haier_ y _LG_ en este rangos de precios.
 
-También en los rangos de precios más elevados _de S/.2,500 a S/.3,500, de S/.3,500 a S/.4,500, y > S/.4,500_ la varidad de marcas a disminuido: el 2017 ya no encontramos productos de las marcas _Sharp_ ni _Panasonic_ en estos rangos.
+También en los rangoss de precios más elevados _de S/.2,500 a S/.3,500, de S/.3,500 a S/.4,500, y > S/.4,500_ la varidad de marcas a disminuido: el 2017 ya no encontramos productos de las marcas _Sharp_ ni _Panasonic_ en estos rangoss.
 
 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
@@ -569,8 +560,8 @@ También en los rangos de precios más elevados _de S/.2,500 a S/.3,500, de S/.3
 
 
 
-tvs_ripley_tvs_por_rango <- tvs_ripley  %>%
-                            group_by(periodo, rango, marca) %>%
+tvs_ripley_tvs_por_rangos <- tvs_ripley  %>%
+                            group_by(periodo, rangos, marca) %>%
                             summarise(cantidad.marca = length(marca)) %>% 
                             #mutate(porcentaje = paste0(round(cantidad.marca/sum(cantidad.marca)*100,2),'%'))
                             mutate(porcentaje_tvs = round(cantidad.marca/sum(cantidad.marca),4))
@@ -580,7 +571,7 @@ tvs_ripley_tvs_por_rango <- tvs_ripley  %>%
 
 
 
-tvs_ripley_tvs_por_rango$periodo <- factor(tvs_ripley_tvs_por_rango$periodo, levels = c(2017,2016),
+tvs_ripley_tvs_por_rangos$periodo <- factor(tvs_ripley_tvs_por_rangos$periodo, levels = c(2016,2017, 2019),
                                          ordered = T)
 
 
@@ -589,7 +580,7 @@ tvs_ripley_tvs_por_rango$periodo <- factor(tvs_ripley_tvs_por_rango$periodo, lev
 
 
 
-tvs_ripley_tvs_por_rango$rango <- factor(tvs_ripley_tvs_por_rango$rango, levels = c("< S/.500",
+tvs_ripley_tvs_por_rangos$rangos <- factor(tvs_ripley_tvs_por_rangos$rangos, levels = c("< S/.500",
                                                       "S/.500 -\r\n S/.1500",
                                                       "S/.1500 -\r\n S/.2500",
                                                       "S/.2500 -\r\n S/.3500",
@@ -602,18 +593,20 @@ tvs_ripley_tvs_por_rango$rango <- factor(tvs_ripley_tvs_por_rango$rango, levels 
 
 
 
-#tt3 <- "Ripley.com.pe \nmarcas de tvs por rango de precio en porcentajes %"
+#tt3 <- "Ripley.com.pe \nmarcas de tvs por rangos de precio en porcentajes %"
 tt3 <- ""
 stt3 <- "\n"
 
 
+tt5 <- ""
+stt5 <- "\n"
 
 
 
-
-ggplot(tvs_ripley_tvs_por_rango, aes(x=rango, y= porcentaje_tvs ,fill=marca)) + 
+ggplotly(ggplot(tvs_ripley_tvs_por_rangos, aes(x=rangos, y= porcentaje_tvs ,fill=marca, text = percent(porcentaje_tvs))) + 
   geom_bar(stat = "identity", width = .7) +
   facet_grid(~ periodo) +
+  coord_flip() +  
   theme_bw() +
   theme(axis.text.x = element_text(colour="grey20",size=8,hjust=.5,vjust=.5,face="plain"),
         axis.text.y = element_text(colour="grey20",size=8,hjust=1,vjust=0,face="plain"),  
@@ -629,14 +622,15 @@ ggplot(tvs_ripley_tvs_por_rango, aes(x=rango, y= porcentaje_tvs ,fill=marca)) +
         panel.grid.major.x = element_blank(),
         panel.grid.minor.x = element_blank()) +
   scale_y_continuous(labels=percent) +
-  # scale_fill_manual(
-  #   values = c("hisense" = "#F39EF7","sony" = "#003366","panasonic" = "#FCB462",
-  #              "samsung" = "#7ec0ee", "lg" = "#A21420",
-  #              "aoc" = "#9DCC27", "sharp" = "#BEBBDA", "hyundai" = "#FCB442")) +
-  # labs(title = tt5, subtitle = stt5, caption = cptn,
-  #      x = "", y = "") +
+  scale_fill_manual(
+    values = brand_tvs_colors) +
+  labs(title = tt5, subtitle = stt5, caption = cptn,
+       x = "", y = "") +
   labs(title = tt3, subtitle = stt3, caption = "",
-       x = "", y = "")
+       x = "", y = ""), tooltip = c("marca", "text")) %>% 
+  config(displayModeBar = FALSE)
+
+
 
 ```
 
@@ -647,7 +641,7 @@ ggplot(tvs_ripley_tvs_por_rango, aes(x=rango, y= porcentaje_tvs ,fill=marca)) +
 
 
 
-Falabella está ofreciendo más televisores de la marca _samsung_ en el rango más alto ("> S/.4,000"). El año pasado era _lg_ la marca que domniba esta categoría.
+Falabella está ofreciendo más televisores de la marca _samsung_ en el rangos más alto ("> S/.4,000"). El año pasado era _lg_ la marca que domniba esta categoría.
 
 Este ecommerce no ofrece productos de menos de S/.500 soles.
 
@@ -658,10 +652,12 @@ Este ecommerce no ofrece productos de menos de S/.500 soles.
 
 ### Falabella
 
+### Falabella
 
 
-tvs_falabella.tvs.por.rango <- tvs_falabella  %>%
-  group_by(periodo, rango, marca) %>%
+
+tvs_falabella_tvs_por_rangos <- tvs_falabella  %>%
+  group_by(periodo, rangos, marca) %>%
   summarise(cantidad.marca = length(marca)) %>% 
   #mutate(porcentaje = paste0(round(cantidad.marca/sum(cantidad.marca)*100,2),'%'))
   mutate(porcentaje_tvs = round(cantidad.marca/sum(cantidad.marca),4))
@@ -670,33 +666,32 @@ tvs_falabella.tvs.por.rango <- tvs_falabella  %>%
 
 
 
-tvs_falabella.tvs.por.rango$periodo <- factor(tvs_falabella.tvs.por.rango$periodo, levels = c(2017,2016),
+tvs_falabella_tvs_por_rangos$periodo <- factor(tvs_falabella_tvs_por_rangos$periodo, levels = c(2016,2017, 2019),
                                               ordered = T)
 
 
 
-tvs_falabella.tvs.por.rango$rango <- factor(tvs_falabella.tvs.por.rango$rango, levels = c("< S/.500",
-                                                                                    "S/.500 -\r\n S/.1500",
-                                                                                    "S/.1500 -\r\n S/.2500",
-                                                                                    "S/.2500 -\r\n S/.3500",
-                                                                                    "S/.3500 -\r\n S/.4500",
-                                                                                    "> S/.4,500"),
-                                         ordered = T)
+tvs_falabella_tvs_por_rangos$rangos <- factor(tvs_falabella_tvs_por_rangos$rangos, levels = c("< S/.500",
+                                                                                          "S/.500 -\r\n S/.1500",
+                                                                                          "S/.1500 -\r\n S/.2500",
+                                                                                          "S/.2500 -\r\n S/.3500",
+                                                                                          "S/.3500 -\r\n S/.4500",
+                                                                                          "> S/.4,500"),
+                                            ordered = T)
 
 
 
-##tt5 <- "Sagafalabella \n % marcas de tvs por rango de precios"
+##tt5 <- "Sagafalabella \n % marcas de tvs por rangos de precios"
 
 tt5 <- ""
 stt5 <- "\n"
 
 
-
-ggplot(tvs_falabella.tvs.por.rango, aes(x=rango, y= porcentaje_tvs ,fill=marca)) + 
+ggplotly(ggplot(tvs_falabella_tvs_por_rangos, aes(x=rangos, y= porcentaje_tvs ,fill=marca, text = percent(porcentaje_tvs))) + 
   geom_bar(stat = "identity", width = .7) +
   facet_grid(~ periodo) +
+  coord_flip() +  
   theme_bw() +
-  #theme_ipsum_rc(grid = "Y") +
   theme(axis.text.x = element_text(colour="grey20",size=8,hjust=.5,vjust=.5,face="plain"),
         axis.text.y = element_text(colour="grey20",size=8,hjust=1,vjust=0,face="plain"),  
         axis.title.x = element_text(colour="grey20",size=18,angle=0,hjust=.5,vjust=0,face="plain"),
@@ -711,15 +706,13 @@ ggplot(tvs_falabella.tvs.por.rango, aes(x=rango, y= porcentaje_tvs ,fill=marca))
         panel.grid.major.x = element_blank(),
         panel.grid.minor.x = element_blank()) +
   scale_y_continuous(labels=percent) +
-  # scale_fill_manual(
-  #   values = c("hisense" = "#F39EF7","sony" = "#003366","panasonic" = "#FCB462",
-  #              "samsung" = "#7ec0ee", "lg" = "#A21420",
-  #              "aoc" = "#9DCC27", "sharp" = "#BEBBDA", "hyundai" = "#FCB442")) +
-  # labs(title = tt5, subtitle = stt5, caption = cptn,
-  #      x = "", y = "") +
-  labs(title = tt5, subtitle = stt5, caption = "",
-       x = "", y = "") 
-
+  scale_fill_manual(
+    values = brand_tvs_colors) +
+  labs(title = tt5, subtitle = stt5, caption = cptn,
+       x = "", y = "") +
+  labs(title = tt3, subtitle = stt3, caption = "",
+       x = "", y = ""), tooltip = c("marca", "text")) %>% 
+  config(displayModeBar = FALSE)
 
 
 
@@ -730,7 +723,7 @@ ggplot(tvs_falabella.tvs.por.rango, aes(x=rango, y= porcentaje_tvs ,fill=marca))
 
 ### Linio 
 
-Linio es el ecommerce con mayor variedad de marcas en cada uno de los rangos de precios.
+Linio es el ecommerce con mayor variedad de marcas en cada uno de los rangoss de precios.
 
 Notamos también que Sony y Panasonic son marcas que están presentes en todas las categorias de precios.
 
@@ -740,8 +733,8 @@ Notamos también que Sony y Panasonic son marcas que están presentes en todas l
 
 
 
-tvs_linio_tvs_por_rango <- tvs_linio  %>%
-  group_by(periodo, rango, marca) %>%
+tvs_linio_tvs_por_rangos <- tvs_linio  %>%
+  group_by(periodo, rangos, marca) %>%
   summarise(cantidad.marca = length(marca)) %>% 
   #mutate(porcentaje = paste0(round(cantidad.marca/sum(cantidad.marca)*100,2),'%'))
   mutate(porcentaje_tvs = round(cantidad.marca/sum(cantidad.marca),4))
@@ -753,35 +746,34 @@ tvs_linio_tvs_por_rango <- tvs_linio  %>%
 
 
 
-tvs_linio_tvs_por_rango$periodo <- factor(tvs_linio_tvs_por_rango$periodo, levels = c(2017,2016),
-                                              ordered = T)
+tvs_linio_tvs_por_rangos$periodo <- factor(tvs_linio_tvs_por_rangos$periodo, levels = c(2016,2017, 2019),
+                                          ordered = T)
 
 
 
 
-tvs_linio_tvs_por_rango$rango <- factor(tvs_linio_tvs_por_rango$rango, levels = c("< S/.500",
-                                                                                          "S/.500 -\r\n S/.1500",
-                                                                                          "S/.1500 -\r\n S/.2500",
-                                                                                          "S/.2500 -\r\n S/.3500",
-                                                                                          "S/.3500 -\r\n S/.4500",
-                                                                                          "> S/.4,500"),
-                                            ordered = T)
+tvs_linio_tvs_por_rangos$rangos <- factor(tvs_linio_tvs_por_rangos$rangos, levels = c("< S/.500",
+                                                                                  "S/.500 -\r\n S/.1500",
+                                                                                  "S/.1500 -\r\n S/.2500",
+                                                                                  "S/.2500 -\r\n S/.3500",
+                                                                                  "S/.3500 -\r\n S/.4500",
+                                                                                  "> S/.4,500"),
+                                        ordered = T)
 
 
 
 
-#tt5 <- "Linio \n % marcas de tvs por rango de precios"
+#tt5 <- "Linio \n % marcas de tvs por rangos de precios"
 tt5 <- ""
 
 stt5 <- "\n"
 
 
-
-ggplot(tvs_linio_tvs_por_rango, aes(x=rango, y= porcentaje_tvs ,fill=marca)) + 
+ggplotly(ggplot(tvs_falabella_tvs_por_rangos, aes(x=rangos, y= porcentaje_tvs ,fill=marca, text = percent(porcentaje_tvs))) + 
   geom_bar(stat = "identity", width = .7) +
   facet_grid(~ periodo) +
+  coord_flip() +  
   theme_bw() +
-  #theme_ipsum_rc(grid = "Y") +
   theme(axis.text.x = element_text(colour="grey20",size=8,hjust=.5,vjust=.5,face="plain"),
         axis.text.y = element_text(colour="grey20",size=8,hjust=1,vjust=0,face="plain"),  
         axis.title.x = element_text(colour="grey20",size=18,angle=0,hjust=.5,vjust=0,face="plain"),
@@ -796,19 +788,13 @@ ggplot(tvs_linio_tvs_por_rango, aes(x=rango, y= porcentaje_tvs ,fill=marca)) +
         panel.grid.major.x = element_blank(),
         panel.grid.minor.x = element_blank()) +
   scale_y_continuous(labels=percent) +
-  # scale_fill_manual(
-  #   values = c("hisense" = "#F39EF7","sony" = "#003366","panasonic" = "#FCB462",
-  #              "samsung" = "#7ec0ee", "lg" = "#A21420",
-  #              "aoc" = "#9DCC27", "sharp" = "#BEBBDA", "hyundai" = "#FCB442")) +
-  # labs(title = tt5, subtitle = stt5, caption = cptn,
-  #      x = "", y = "") +
-  labs(title = tt5, subtitle = stt5, caption = "",
-       x = "", y = "") 
-
-
-
-
-
+  scale_fill_manual(
+    values = brand_tvs_colors) +
+  labs(title = tt5, subtitle = stt5, caption = cptn,
+       x = "", y = "") +
+  labs(title = tt3, subtitle = stt3, caption = "",
+       x = "", y = ""), tooltip = c("marca", "text")) %>% 
+  config(displayModeBar = FALSE)
 
 ```
 
@@ -842,19 +828,24 @@ Estos son las marcas que muestran una gran variedad de precios en los 3 ecommerc
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
 
 
-tvs_ripley$periodo <- factor(tvs_ripley$periodo, levels = c(2017,2016),
-                            ordered = T)
+
+tvs_ripley$periodo <- factor(tvs_ripley$periodo, levels = c(2016,2017,2019),
+                             ordered = T)
 
 
 
 ### Ripley: distribuci�n de los precios de TVs por marca
 
 
-precio_actual_ripley <- plot_ly(tvs_ripley, x = ~periodo, y = ~precio.actual, color = ~marca, type = "box") %>%
-  layout(boxmode = "group") %>% 
-  config(displayModeBar = FALSE)
+precio_actual_ripley <- plot_ly(tvs_ripley, x = ~periodo, y = ~precio_actual, color = ~marca, type = "box", colors = brand_tvs_colors) %>%
+   layout(boxmode = "group") %>% 
+  layout(title = "Ripley - Precios de TVs por marca") %>% 
+  add_boxplot() %>%
+  layout(yaxis = list( tickprefix = 'S/', tickformat = ',.2f' )) %>% 
+  config(displayModeBar = FALSE) 
 
 precio_actual_ripley
+
 
 
 ```
@@ -873,18 +864,20 @@ precio_actual_ripley
 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
 
-tvs_falabella$periodo <- factor(tvs_falabella$periodo, levels = c(2017,2016),
+tvs_falabella$periodo <- factor(tvs_falabella$periodo, levels = c(2016,2017,2019),
                             ordered = T)
-
 
 
 
 ### Falabella: distribuci�n de los precios de TVs por marca
 
 
-precio_actual_falabella <- plot_ly(tvs_falabella, x = ~periodo, y = ~precio.actual, color = ~marca, type = "box") %>%
+precio_actual_falabella <- plot_ly(tvs_falabella, x = ~periodo, y = ~precio_actual, color = ~marca, type = "box", colors = brand_tvs_colors) %>%
   layout(boxmode = "group") %>% 
-  config(displayModeBar = FALSE)
+  layout(title = "Falabella - Precios de TVs por marca") %>% 
+  add_boxplot() %>%
+  layout(yaxis = list( tickprefix = 'S/', tickformat = ',.2f' )) %>% 
+  config(displayModeBar = FALSE)  
 
 precio_actual_falabella
 
@@ -906,57 +899,48 @@ precio_actual_falabella
 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
 
-tvs_linio$periodo <- factor(tvs_linio$periodo, levels = c(2017,2016),
-                                          ordered = T)
 
-
-
-
-tvs_linio.parte1$periodo <- factor(tvs_linio.parte1$periodo, levels = c(2017,2016),
+tvs_linio$periodo <- factor(tvs_linio$periodo, levels = c(2016,2017,2019),
                             ordered = T)
 
 
 
-tvs_linio_parte2$periodo <- factor(tvs_linio_parte2$periodo, levels = c(2017,2016),
+
+tvs_linio_parte1$periodo <- factor(tvs_linio_parte1$periodo, levels = c(2016,2017,2019),
+                                   ordered = T)
+
+
+
+tvs_linio_parte2$periodo <- factor(tvs_linio_parte2$periodo, levels = c(2016,2017,2019),
                                    ordered = T)
 
 
 
 
 
-
-
-
-
-
-
-
-
-### Linio - Precio Actual - Parte 1 y 2
-
-
-
-
-precio_actual_linio_parte1 <- plot_ly(tvs_linio.parte1, x = ~periodo, y = ~precio.actual, color = ~marca, type = "box") %>%
-  layout(boxmode = "group") %>% 
-  config(displayModeBar = FALSE)
+precio_actual_linio_parte1 <- plot_ly(tvs_linio_parte1, x = ~periodo, y = ~precio_actual, color = ~marca, type = "box", colors = brand_tvs_colors) %>%
+  layout(boxmode = "group",
+         title = "Linio - Precios de TVs (Parte 1) ") %>% 
+ add_boxplot() %>%
+  layout(yaxis = list( tickprefix = 'S/', tickformat = ',.2f' )) %>% 
+  config(displayModeBar = FALSE) 
 
 precio_actual_linio_parte1
-
 
 ```
 
 </br>
 </br>
-</br>
-</br>
 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
 
+precio_actual_linio_parte2 <- plot_ly(tvs_linio_parte2, x = ~periodo, y = ~precio_actual, color = ~marca, type = "box", colors = brand_tvs_colors) %>%
+  layout(boxmode = "group",
+         title = "Linio - Precios de TVs (Parte 2)") %>% 
+  add_boxplot() %>%
+  layout(yaxis = list( tickprefix = 'S/', tickformat = ',.2f' )) %>% 
+  config(displayModeBar = FALSE) 
 
-precio_actual_linio_parte2 <- plot_ly(tvs_linio_parte2, x = ~periodo, y = ~precio.actual, color = ~marca, type = "box") %>%
-  layout(boxmode = "group") %>% 
-  config(displayModeBar = FALSE)
 
 precio_actual_linio_parte2
 
@@ -970,7 +954,7 @@ precio_actual_linio_parte2
 </br>
 </br>
 
-#Conclusiones:
+# Conclusiones:
 
 
 Me resultó muy interesante el 2016, y lo volvió a confirmar este 2017, la perspectiva de negocio de Linio. Este ecommerce, nacido netamente en el espacio digital es el que más variedad de productos ofrece. 
